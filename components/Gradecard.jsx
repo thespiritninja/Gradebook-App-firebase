@@ -1,48 +1,70 @@
 import { Image, StyleSheet, Text, View, TouchableOpacity } from 'react-native';
-import { studentData } from '../assets';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import shreyasImg from '../assets/shreyas.png';
 import kunalImg from '../assets/kunal.png';
 import mandarImg from '../assets/mandar.png';
 import kashImg from '../assets/kash.png';
-
+import defaultImg from '../assets/favicon.png';
+import { collection, getDocs } from 'firebase/firestore';
+import { db } from '../firebaseConfig';
 const Gradecard = ({ studentName }) => {
-    const displayData = studentData[studentName.toLowerCase()];
-    const [data, setData] = useState(displayData);
+    const [displayData1, setdisplayData1] = useState({});
     const studentImages = {
         shreyas:shreyasImg,
         kunal:kunalImg,
         mandar:mandarImg,
         kash:kashImg,
-
+        default: defaultImg,
     }
     const increasePoints = () => {
-        const updatedData = { ...data, 
-            points: data.points < 100 ? data.points + 1 : 100,
-            score: data.points - (data.absences / 10)
+        const updatedData = { ...displayData1, 
+            points: displayData1.points < 100 ? displayData1.points + 1 : 100,
+            score: displayData1.points - (displayData1.absences / 10)
         };
-        setData(updatedData);
+        setdisplayData1(updatedData);
     };
 
     const increaseAbsences = () => {
-        const updatedData = { ...data, 
-            absences: data.absences + 1,
-            score: data.points - (data.absences / 10)
+        const updatedData = { ...displayData1, 
+            absences: displayData1.absences + 1,
+            score: displayData1.points - (displayData1.absences / 10)
         };
-        setData(updatedData);
+        setdisplayData1(updatedData);
     };
+    console.log(displayData1);
+    useEffect(()=>{
+        function onSetDisplay(value){
+            setdisplayData1(value);
+        }
+        async function fetchData(){
+            try {
+                await getDocs(collection(db, "students"))
+                  .then((querySnapshot)=>{
+                    querySnapshot.docs.forEach(doc => {
+                      if(doc.id == studentName.toLowerCase()){
+                        onSetDisplay(doc.data());
+                      }
+                    });
+                  })
+              } catch (error) {
+                console.error('Error fetching data:', error);
+              }
+        }
+        fetchData();
+    },[])
 
     return (
         <View style={styles.main}>
+            {/* <FirebaseFetcher studentName={studentName.toLowerCase()} setDisplayData1={setdisplayData1} /> */}
             <View style={styles.idCard}>
-                <Image source={studentImages[studentName.toLowerCase()]} style={styles.studentImage} />
+                <Image source={studentImages[studentName.toLowerCase()] ? studentImages[studentName.toLowerCase()] : studentImages[defaultImg]  } style={styles.studentImage} />
                 <Text>Name: {studentName}</Text>
-                <Text style={{ paddingTop: 10 }}>Score: {data.score}</Text>
+                <Text style={{ paddingTop: 10 }}>Score: {displayData1.score}</Text>
             </View>
             <View style={styles.grades}>
                 <View style={styles.diff}>
-                    <Text>Absences: {data.absences}</Text>
-                    <Text>Points: {data.points}</Text>
+                    <Text>Absences: {displayData1.absences}</Text>
+                    <Text>Points: {displayData1.points}</Text>
                 </View>
                 <View style={styles.buttonContainer}>
                     <TouchableOpacity onPress={increaseAbsences} style={styles.addButtonRed}>
