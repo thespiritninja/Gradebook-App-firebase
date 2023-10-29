@@ -17,7 +17,7 @@ const StudentList = ({ navigation }) => {
       setStudents(studentsData);
     };
     fetchStudents();
-  }, []);
+  }, [students]);
 
   const handleStudentPress = (studentName) => {
     navigation.navigate('StudentDetails', { studentName });
